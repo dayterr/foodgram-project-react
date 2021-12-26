@@ -8,7 +8,7 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        constraints = (models.UniqueConstraint(fields=['name', 'measurement_unit'],
+        constraints = (models.UniqueConstraint(fields=('name', 'measurement_unit'),
                        name='OneNameOneUnit'),)
 
     def __str__(self):
@@ -40,11 +40,11 @@ class Recipe(models.Model):
                                          verbose_name='Ингредиент')
     tags = models.ManyToManyField(Tag, related_name='tags',
                                   verbose_name='Тэг')
-    cooking_time = models.IntegerField(verbose_name='Время приготовления')
+    cooking_time = models.PositiveSmallIntegerField(verbose_name='Время приготовления')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата добавления рецепта на сайт')
 
     class Meta:
-        ordering = ['-created']
+        ordering = ('-created',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -54,7 +54,7 @@ class Recipe(models.Model):
 
 class IngredientInRecipe(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
-                                   verbose_name='Ингредиент', related_name='amount')
+                                   verbose_name='Ингредиент')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
                                related_name='ings_in_recipe')
     amount = models.PositiveSmallIntegerField(verbose_name='Количество')
@@ -62,10 +62,12 @@ class IngredientInRecipe(models.Model):
     class Meta:
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецепте'
-        unique_together = ('ingredient', 'recipe')
+        constraints = (models.UniqueConstraint(fields=('ingredient', 'recipe'),
+                       name='NoDuplicateIngredient'),)
 
     def __str__(self):
-        return f'{self.ingredient.name}: {self.amount} {self.ingredient.measurement_unit}'
+        return (f'{self.ingredient.name}: {self.amount} '
+                f'{self.ingredient.measurement_unit}, рецепт: {self.recipe.name}')
 
 
 class Favourite(models.Model):
@@ -73,8 +75,6 @@ class Favourite(models.Model):
                                related_name='favs', verbose_name='Автор "Избранного"')
     recipe = models.ForeignKey(Recipe, related_name='fav_recipes', on_delete=models.CASCADE,
                                verbose_name='Рецепты')
-    created = models.DateField(auto_now_add=True, verbose_name='Дата создания списка любимых рецептов',
-                               unique_for_date=False)
 
 
 class ShoppingList(models.Model):
@@ -83,5 +83,3 @@ class ShoppingList(models.Model):
                                verbose_name='Автор списка покупок')
     recipe = models.ForeignKey(Recipe, related_name='shop_recipes', on_delete=models.CASCADE,
                                verbose_name='Рецепты')
-    created = models.DateField(auto_now_add=True, verbose_name='Дата создания списка покупок',
-                               unique_for_date=False)

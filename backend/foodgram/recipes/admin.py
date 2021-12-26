@@ -1,10 +1,11 @@
 from django.contrib import admin
 
-from .models import Ingredient, IngredientInRecipe, Recipe, ShoppingList, Tag
+from .models import Ingredient, IngredientInRecipe, Recipe, Tag
 
 
 class IngredientClass(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
+    list_filter = ('name',)
 
 
 class RecipeAdmin(admin.ModelAdmin):
@@ -13,6 +14,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     def in_favourite(self, obj):
         return obj.fav_recipes.count()
+
     in_favourite.short_description = 'Количество добавлений рецепта в "Избранное"'
 
 

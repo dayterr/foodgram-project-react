@@ -1,5 +1,3 @@
-#-*- coding: UTF-8 -*-
-
 import io
 
 from django.conf import settings
@@ -14,14 +12,15 @@ from rest_framework.views import APIView
 
 from django_filters.rest_framework import DjangoFilterBackend
 
+from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab import rl_config
 
 from .filters import IngredientFilter, RecipeFilter
-from .models import Favourite, Ingredient, IngredientInRecipe, Recipe, ShoppingList, Tag
-from .permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrReadOnly
+from .models import Ingredient, IngredientInRecipe, Recipe, ShoppingList, Tag
+from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializer import (FavouriteSerializer, IngredientSerializer, RecipeReadSerializer, RecipeWriteSerializer,
                          ShoppingListSerializer, TagSerializer)
 
@@ -60,7 +59,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class ShoppingListViewSet(APIView):
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
-    def get(self, request, recipe_id):
+    def post(self, request, recipe_id):
         author = request.user
         data = {
             'author': author.id,
@@ -84,7 +83,7 @@ class ShoppingListViewSet(APIView):
 class FavouriteViewSet(APIView):
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
-    def get(self, request, recipe_id):
+    def post(self, request, recipe_id):
         author = request.user
         data = {
             'author': author.id,
@@ -113,14 +112,13 @@ class DownloadShoppingList(APIView):
         shop_list = IngredientInRecipe.objects.filter(recipe__shop_recipes__author=request.user)
         for ingredient in shop_list:
             if ingredient.ingredient.name not in the_list:
-                the_list[ingredient.ingredient.name] = [ingredient.amount, ingredient.ingredient.measurement_unit]
+                the_list[ingredient.ingredient.name] = [ingredient.amount,
+                                                        ingredient.ingredient.measurement_unit]
             else:
-                print(the_list[ingredient.ingredient.name][0])
                 the_list[ingredient.ingredient.name][0] += ingredient.amount
         response = HttpResponse(content_type='application/pdf; charset=UTF-8')
         response['Content-Disposition'] = 'attachment; filename="spisok.pdf"'
         buffer = io.BytesIO()
-        from reportlab.lib.units import inch
         p = canvas.Canvas(buffer)
         textobject = p.beginText()
         textobject.setTextOrigin(inch, 2.5*inch)

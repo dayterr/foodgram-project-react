@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework import filters, status, viewsets
-from rest_framework.decorators import action
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,11 +14,16 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
+    def retrieve(self, request, *args, **kwargs):
+        if kwargs.get('pk') == 'me':
+            return Response(self.get_serializer(request.user).data)
+        return super().retrieve(request, args, kwargs)
+
 
 class SubscribeViewSet(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request, user_id):
+    def post(self, request, user_id):
         user = request.user
         fol = User.objects.get(id=user_id)
         data = {
@@ -48,5 +52,3 @@ class SubscribeListViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return User.objects.filter(following__user=user)
-
-
