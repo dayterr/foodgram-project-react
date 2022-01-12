@@ -3,25 +3,26 @@ import io
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-
-from rest_framework import filters, status, viewsets
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab import rl_config
+from rest_framework import status, viewsets
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .filters import IngredientFilter, RecipeFilter
-from .models import Ingredient, IngredientInRecipe, Recipe, ShoppingList, Tag
+from .models import (Favourite, Ingredient,
+                     Recipe, ShoppingList, Tag)
 from .permissions import IsAuthorOrAdminOrReadOnly
-from .serializer import (FavouriteSerializer, IngredientSerializer, RecipeReadSerializer, RecipeWriteSerializer,
+from .serializer import (FavouriteSerializer, IngredientSerializer,
+                         RecipeReadSerializer,
+                         RecipeWriteSerializer,
                          ShoppingListSerializer, TagSerializer)
 
 rl_config.TTFSearchPath.append(str(settings.BASE_DIR) + '/fonts')
@@ -56,8 +57,11 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
 
 
-class ShoppingListViewSet(APIView):
+class BaseCustomView(APIView):
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    error_message = None
+    serializer_to_use = None
+    model_contains = None
 
     def post(self, request, recipe_id):
         author = request.user
@@ -65,67 +69,54 @@ class ShoppingListViewSet(APIView):
             'author': author.id,
             'recipe': recipe_id
         }
-        serializer = ShoppingListSerializer(data=data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_to_use(data=data,
+                                            context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, recipe_id):
         author = request.user
         recipe = get_object_or_404(Recipe, pk=recipe_id)
-        rec_exists = ShoppingList.objects.filter(author=author, recipe=recipe).delete()
+        rec_exists = self.model_contains.objects.filter(author=author,
+                                                        recipe=recipe).delete()
         if rec_exists[0] == 0:
-            return Response('Данного рецепта нет в Вашем списке покупок', status=status.HTTP_400_BAD_REQUEST)
+            return Response(self.error_message,
+                            status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class FavouriteViewSet(APIView):
-    permission_classes = (IsAuthorOrAdminOrReadOnly,)
+class ShoppingListViewSet(BaseCustomView):
+    error_message = 'Данного рецепта нет в Вашем списке покупок'
+    serializer_to_use = ShoppingListSerializer
+    model_contains = ShoppingList
 
-    def post(self, request, recipe_id):
-        author = request.user
-        data = {
-            'author': author.id,
-            'recipe': recipe_id
-        }
-        serializer = FavouriteSerializer(data=data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, recipe_id):
-        author = request.user
-        recipe = get_object_or_404(Recipe, pk=recipe_id)
-        rec_exists = FavouriteSerializer.objects.filter(author=author, recipe=recipe).delete()
-        if rec_exists[0] == 0:
-            return Response('Данного рецепта нет в Избранном', status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class FavouriteViewSet(BaseCustomView):
+    error_message = 'Данного рецепта нет в Избранном'
+    serializer_to_use = FavouriteSerializer
+    model_contains = Favourite
 
 
 class DownloadShoppingList(APIView):
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
     def get(self, request):
-        the_list = {}
-        shop_list = IngredientInRecipe.objects.filter(recipe__shop_recipes__author=request.user)
-        for ingredient in shop_list:
-            if ingredient.ingredient.name not in the_list:
-                the_list[ingredient.ingredient.name] = [ingredient.amount,
-                                                        ingredient.ingredient.measurement_unit]
-            else:
-                the_list[ingredient.ingredient.name][0] += ingredient.amount
+        recipes = Recipe.objects.filter(shop_recipes__author=request.user.pk)
+        ingredients = recipes.values_list(
+            'ingredients__name',
+            'ingredients__measurement_unit'
+        ).annotate(ingredients_amount=Sum('ings_in_recipe__amount'))
         response = HttpResponse(content_type='application/pdf; charset=UTF-8')
         response['Content-Disposition'] = 'attachment; filename="spisok.pdf"'
         buffer = io.BytesIO()
         p = canvas.Canvas(buffer)
         textobject = p.beginText()
-        textobject.setTextOrigin(inch, 2.5*inch)
+        textobject.setTextOrigin(inch, 10.5*inch)
         pdfmetrics.registerFont(TTFont('Roboto', 'Roboto-Regular.ttf'))
         textobject.setFont('Roboto', 14)
-        for ingr, data in the_list.items():
-            stroka = f'{ingr}: {data[0]} {data[1]}'
+        for ingr in ingredients:
+            stroka = f'{ingr[0]}: {ingr[2]} {ingr[1]}'
             textobject.textLine(stroka)
         p.drawText(textobject)
         p.showPage()

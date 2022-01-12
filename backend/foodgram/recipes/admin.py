@@ -15,7 +15,8 @@ class RecipeAdmin(admin.ModelAdmin):
     def in_favourite(self, obj):
         return obj.fav_recipes.count()
 
-    in_favourite.short_description = 'Количество добавлений рецепта в "Избранное"'
+    in_favourite.short_description = ('Количество добавлений '
+                                      'рецепта в "Избранное"')
 
 
 admin.site.register(Ingredient, IngredientClass)

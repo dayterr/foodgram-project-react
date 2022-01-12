@@ -1,10 +1,11 @@
 import django_filters
 
-from .models import Ingredient, Recipe, Tag
+from .models import Ingredient, Recipe
 
 
 class IngredientFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(field_name='name', lookup_expr='istartswith')
+    name = django_filters.CharFilter(field_name='name',
+                                     lookup_expr='istartswith')
 
     class Meta:
         model = Ingredient
@@ -12,8 +13,10 @@ class IngredientFilter(django_filters.FilterSet):
 
 
 class RecipeFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(field_name='name', lookup_expr='istartswith')
-    author = django_filters.NumberFilter(field_name='author__id', lookup_expr='iexact')
+    name = django_filters.CharFilter(field_name='name',
+                                     lookup_expr='istartswith')
+    author = django_filters.NumberFilter(field_name='author__id',
+                                         lookup_expr='iexact')
     tags = django_filters.AllValuesMultipleFilter(field_name='tags__slug')
 
     class Meta:

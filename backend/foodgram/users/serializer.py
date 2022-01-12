@@ -10,7 +10,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 'is_subscribed')
+        fields = ('email', 'id', 'username',
+                  'first_name', 'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
@@ -41,7 +42,8 @@ class UserInSubscriptionsSerializer(serializers.ModelSerializer):
         from recipes.serializer import FourFieldRecipeSerializer
         recipes = obj.recipes.all()
         request = self.context.get('request')
-        return FourFieldRecipeSerializer(recipes, many=True, context={'request': request}).data
+        return FourFieldRecipeSerializer(recipes, many=True,
+                                         context={'request': request}).data
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
