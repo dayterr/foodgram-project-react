@@ -111,9 +111,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                                                   'может быть отрицательным')
         return data
 
-    def create(self, validated_data):
+    def get_nested(self, validated_data):
         ingredients = validated_data.pop('ings_in_recipe')
         tags = validated_data.pop('tags')
+        return ingredients, tags
+
+    def create(self, validated_data):
+        ingredients, tags = self.get_nested(validated_data)
         author = self.context.get('request').user
         recipe = Recipe.objects.create(author=author, **validated_data)
 
@@ -126,26 +130,22 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.tags.clear()
-        tags = self.initial_data.get('tags')
+        ingredients, tags = self.get_nested(validated_data)
         for tag_id in tags:
-            instance.tags.add(get_object_or_404(Tag, pk=tag_id))
+            instance.tags.add(tag_id)
         IngredientInRecipe.objects.filter(recipe=instance).delete()
-        for ingredient in validated_data.get('ings_in_recipe'):
+        for ingredient in ingredients:
             ingr = ingredient.get('ingredient')
-            ingredients_amounts = IngredientInRecipe.objects.create(
+            ingredients_in_recipe = IngredientInRecipe.objects.create(
                 recipe=instance,
                 ingredient_id=ingr.id,
                 amount=ingredient.get('amount')
             )
-            ingredients_amounts.save()
+            ingredients_in_recipe.save()
 
         if validated_data.get('image') is not None:
             instance.image = validated_data.get('image')
-        instance.name = validated_data.get('name')
-        instance.text = validated_data.get('text')
-        instance.cooking_time = validated_data.get('cooking_time')
-        instance.save()
-        return instance
+        return super().update(instance, validated_data)
 
 
 class FourFieldRecipeSerializer(serializers.ModelSerializer):
