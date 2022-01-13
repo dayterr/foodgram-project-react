@@ -1,8 +1,14 @@
 from rest_framework import serializers
 
 from .models import User, Subscribe
-
 from recipes.models import Recipe
+
+
+class FourFieldRecipeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -39,7 +45,6 @@ class UserInSubscriptionsSerializer(serializers.ModelSerializer):
         return Subscribe.objects.filter(user=user, following=obj).exists()
 
     def get_recipes(self, obj):
-        from recipes.serializer import FourFieldRecipeSerializer
         recipes = obj.recipes.all()
         request = self.context.get('request')
         return FourFieldRecipeSerializer(recipes, many=True,

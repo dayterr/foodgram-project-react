@@ -46,15 +46,14 @@ class SubscribeViewSet(APIView):
         }
         serializer = SubscribeSerializer(data=data,
                                          context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, user_id):
-        author = request.user
+        user = request.user
         following = get_object_or_404(User, pk=user_id)
-        sub_exists = Subscribe.objects.filter(author=author,
+        sub_exists = Subscribe.objects.filter(user=user,
                                               following=following).delete()
         if sub_exists[0] == 0:
             return Response('Вы не подписаны на данного пользователя',

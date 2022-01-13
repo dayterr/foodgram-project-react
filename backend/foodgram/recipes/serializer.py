@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -81,7 +82,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     ingredients = IngredientInRecipeSerializer(many=True,
                                                source='ings_in_recipe')
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True
+        queryset=Tag.objects.all(), many=True,
     )
 
     class Meta:
@@ -90,23 +91,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                   'image', 'name', 'text', 'cooking_time')
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
-        ingredients_set = set([value for _, value in ingredients])
+        ingredients = data.get('ings_in_recipe')
+        ingredients_set = set([value.get('ingredient')
+                               for value in ingredients])
         if len(ingredients) > len(ingredients_set):
             raise serializers.ValidationError('Ингредиенты в рецепте '
                                               'не должны повторяться')
-        tags = self.initial_data.get('tags')
-        tags_set = set([value for _, value in tags])
+        tags = data.get('tags')
+        tags_set = set([value for value in tags])
         if len(tags) > len(tags_set):
             raise serializers.ValidationError('Тэги должны быть уникальны')
-        cooking_time = self.initial_data.get('cooking_time')
+        cooking_time = data.get('cooking_time')
         if cooking_time < 0:
             raise serializers.ValidationError('Время приготовления не '
                                               'может быть отрицательным')
-        for ingredient in ingredients_set:
-            if ingredient.amount < 0:
+        for ingredient in ingredients:
+            if ingredient.get('amount') < 0:
                 raise serializers.ValidationError('Количество ингредиента не '
                                                   'может быть отрицательным')
+        return data
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ings_in_recipe')
@@ -120,6 +123,29 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ingredient.get('amount'))
         recipe.tags.set(tags)
         return recipe
+
+    def update(self, instance, validated_data):
+        instance.tags.clear()
+        tags = self.initial_data.get('tags')
+        for tag_id in tags:
+            instance.tags.add(get_object_or_404(Tag, pk=tag_id))
+        IngredientInRecipe.objects.filter(recipe=instance).delete()
+        for ingredient in validated_data.get('ings_in_recipe'):
+            ingr = ingredient.get('ingredient')
+            ingredients_amounts = IngredientInRecipe.objects.create(
+                recipe=instance,
+                ingredient_id=ingr.id,
+                amount=ingredient.get('amount')
+            )
+            ingredients_amounts.save()
+
+        if validated_data.get('image') is not None:
+            instance.image = validated_data.get('image')
+        instance.name = validated_data.get('name')
+        instance.text = validated_data.get('text')
+        instance.cooking_time = validated_data.get('cooking_time')
+        instance.save()
+        return instance
 
 
 class FourFieldRecipeSerializer(serializers.ModelSerializer):
