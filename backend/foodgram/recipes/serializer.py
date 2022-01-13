@@ -116,15 +116,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data.pop('tags')
         return ingredients, tags
 
+    def save_ingredients(self, ingredients, recipe):
+        for ingredient in ingredients:
+            ingredients_in_recipe = IngredientInRecipe.objects.create(
+                recipe=recipe, ingredient=ingredient['ingredient'],
+                amount=ingredient.get('amount'))
+            ingredients_in_recipe.save()
+
     def create(self, validated_data):
         ingredients, tags = self.get_nested(validated_data)
         author = self.context.get('request').user
         recipe = Recipe.objects.create(author=author, **validated_data)
-
-        for ingredient in ingredients:
-            IngredientInRecipe.objects.create(
-                recipe=recipe, ingredient=ingredient['ingredient'],
-                amount=ingredient.get('amount'))
+        self.save_ingredients(ingredients, recipe)
         recipe.tags.set(tags)
         return recipe
 
@@ -134,15 +137,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         for tag_id in tags:
             instance.tags.add(tag_id)
         IngredientInRecipe.objects.filter(recipe=instance).delete()
-        for ingredient in ingredients:
-            ingr = ingredient.get('ingredient')
-            ingredients_in_recipe = IngredientInRecipe.objects.create(
-                recipe=instance,
-                ingredient_id=ingr.id,
-                amount=ingredient.get('amount')
-            )
-            ingredients_in_recipe.save()
-
+        self.save_ingredients(ingredients, instance)
         if validated_data.get('image') is not None:
             instance.image = validated_data.get('image')
         return super().update(instance, validated_data)
