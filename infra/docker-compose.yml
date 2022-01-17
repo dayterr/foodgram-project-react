@@ -26,7 +26,7 @@ services:
   frontend:
     build:
       context: ../frontend
-      dockerfile: ../backend/Dockerfile
+      dockerfile: ../backend/foodgram/Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
 
