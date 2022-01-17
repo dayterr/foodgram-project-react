@@ -1,13 +1,11 @@
 FROM python:3.8.5-slim
 
-RUN mkdir /app
+WORKDIR /code
 
-COPY requirements.txt /app
+COPY requirements.txt .
 
-RUN pip3 install -r /app/requirements.txt 
+RUN pip3 install -r requirements.txt
 
-COPY foodgram/ /app
+COPY . .
 
-WORKDIR /app
-
-CMD gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000
+CMD gunicorn api_yamdb.wsgi:application --bind 0.0.0.0:8000
