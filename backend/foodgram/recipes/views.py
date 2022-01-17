@@ -67,7 +67,7 @@ class BaseCustomView(APIView):
     serializer_to_use = None
     model_contains = None
 
-    def post(self, request, recipe_id):
+    def get(self, request, recipe_id):
         author = request.user
         data = {
             'author': author.id,

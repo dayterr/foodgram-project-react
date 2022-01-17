@@ -37,7 +37,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class SubscribeViewSet(APIView):
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request, user_id):
+    def get(self, request, user_id):
         user = request.user
         fol = User.objects.get(id=user_id)
         data = {
