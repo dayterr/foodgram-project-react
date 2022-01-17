@@ -116,7 +116,7 @@ class DownloadShoppingList(APIView):
         buffer = io.BytesIO()
         p = canvas.Canvas(buffer)
         textobject = p.beginText()
-        textobject.setTextOrigin(inch, 10.5*inch)
+        textobject.setTextOrigin(inch, 10.5 * inch)
         pdfmetrics.registerFont(TTFont('Roboto', 'Roboto-Regular.ttf'))
         textobject.setFont('Roboto', 14)
         for ingr in ingredients:
