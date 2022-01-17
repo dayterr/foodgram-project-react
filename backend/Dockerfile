@@ -1,6 +1,6 @@
 FROM python:3.8.5-slim
 
-WORKDIR /app
+WORKDIR /app/backend/foodgram
 
 COPY requirements.txt .
 
