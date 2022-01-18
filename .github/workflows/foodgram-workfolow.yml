@@ -59,6 +59,7 @@ jobs:
           stack_file_name: docker-compose.yaml
           script: |
             sudo docker pull dayterr/foodgram
+            cd $ {{ secrets.DEPLOY_DIR }}/foodgram-project-react/infra
             sudo docker-compose stop
             sudo docker-compose rm web
             touch .env 
