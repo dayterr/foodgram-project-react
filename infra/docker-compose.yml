@@ -14,7 +14,6 @@ services:
   
   web:
     image: dayterr/foodgram:latest
-    restart: always
     volumes: 
       - static_value:/app/static/
       - media_value:/app/media/
@@ -44,7 +43,6 @@ services:
       - media_value:/var/html/media/
     env_file:
       - .env
-    restart: always
 
     depends_on:
       - web
