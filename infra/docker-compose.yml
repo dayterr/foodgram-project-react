@@ -13,7 +13,9 @@ services:
       - .env
   
   web:
-    image: dayterr/foodgram:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
     restart: always
     volumes: 
       - static_value:/app/backend/static/
