@@ -5,7 +5,7 @@
 
 Проект доступен по адресу: http://178.154.195.129/
 
-#Стэк
+# Стэк
 - Python 3; 
 - Django; 
 - Django Rest Framework;
