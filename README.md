@@ -49,6 +49,4 @@ docker-compose exec -T web python manage.py migrate --no-input
 
 Собрать статику: ```docker-compose exec -T web python manage.py collectstatic --no-input```
 
-Данные для входа на сайт:
-- login: adminuser
-- пароль: etoparoldlyaadmina
+Автор: Мария Дайтер – https://github.com/dayterr
