@@ -33,6 +33,22 @@
 - DEBUG – включен ли режим дебага в Django
 - ALLOWED_HOSTS – разрешённые хосты
 
+Клонировать репозиторий: ```git clone https://github.com/dayterr/yamdb_final.git```
+
+Запустить программу: ```docker-compose up```
+
+Осуществить миграции: 
+```
+docker-compose exec -T web python manage.py makemigrations recipes users --no-input
+docker-compose exec -T web python manage.py migrate --no-input
+```
+
+Создать суперпользователя: ```docker-compose exec web python manage.py createsuperuser```
+
+Заполнить базу данных: ```docker-compose exec -T web python manage.py loaddata fixtures.json```
+
+Собрать статику: ```docker-compose exec -T web python manage.py collectstatic --no-input```
+
 Данные для входа на сайт:
 - login: adminuser
 - пароль: etoparoldlyaadmina
