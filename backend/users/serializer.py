@@ -1,3 +1,4 @@
+from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 
 from .models import User, Subscribe
@@ -84,3 +85,14 @@ class SubscribeSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Подписка на самого себя невозможна')
         return value
+
+
+class UserCreateCustomSerializer(UserCreateSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            'first_name', 'last_name', 'email', 'username', 'password',
+        )
+
+

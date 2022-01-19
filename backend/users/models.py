@@ -4,7 +4,11 @@ from django.db import models
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    REQUIRED_FIELDS = ('first_name', 'last_name', 'email')
+    username = models.CharField(max_length=50, unique=True)
+    first_name = models.CharField(max_length=25)
+    last_name = models.CharField(max_length=25)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name')
 
     class Meta:
         verbose_name = 'Пользователь'

@@ -1,37 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Subscribe, User
 from .serializer import (SubscribeSerializer,
-                         UserInSubscriptionsSerializer, UserSerializer)
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly,)
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
-
-    @action(
-        detail=False,
-        methods=('GET',),
-        permission_classes=(IsAuthenticated,)
-    )
-    def me(self, request):
-        if request.method == 'PATCH':
-            serializer = self.get_serializer(
-                request.user,
-                data=request.data,
-                partial=True
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-        serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+                         UserInSubscriptionsSerializer)
 
 
 class SubscribeViewSet(APIView):
