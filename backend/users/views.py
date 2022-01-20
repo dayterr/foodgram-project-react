@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from .models import Subscribe, User
 from .serializer import (SubscribeSerializer,
                          UserInSubscriptionsSerializer)
+from recipes.pagination import CustomPagination
 
 
 class SubscribeViewSet(APIView):
@@ -39,6 +40,7 @@ class SubscribeViewSet(APIView):
 class SubscribeListViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = UserInSubscriptionsSerializer
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         user = self.request.user

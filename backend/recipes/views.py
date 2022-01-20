@@ -11,7 +11,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab import rl_config
 from rest_framework import status, viewsets
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,6 +18,7 @@ from rest_framework.views import APIView
 from .filters import IngredientFilter, RecipeFilter
 from .models import (Favourite, Ingredient,
                      Recipe, ShoppingList, Tag)
+from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
 from .serializer import (FavouriteSerializer, IngredientSerializer,
                          RecipeReadSerializer,
@@ -32,8 +32,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filter_class = RecipeFilter
     queryset = Recipe.objects.all()
-    pagination_class = PageNumberPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
