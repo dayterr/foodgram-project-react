@@ -52,7 +52,7 @@ class UserInSubscriptionsSerializer(serializers.ModelSerializer):
                                          context={'request': request}).data
 
     def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj).count()
+        return obj.recipes.count()
 
 
 class SubscribeSerializer(serializers.Serializer):

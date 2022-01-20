@@ -141,6 +141,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             instance.image = validated_data.get('image')
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeReadSerializer(
+            instance, context=context).data
+
 
 class FourFieldRecipeSerializer(serializers.ModelSerializer):
 

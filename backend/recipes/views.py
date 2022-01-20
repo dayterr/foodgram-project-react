@@ -35,10 +35,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
 
-    def get_object(self):
-        obj = get_object_or_404(Recipe, pk=self.kwargs.get('pk'))
-        return obj
-
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
